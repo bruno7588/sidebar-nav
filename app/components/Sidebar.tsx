@@ -66,6 +66,7 @@ const Sidebar: React.FC = () => {
   const [selected, setSelected] = useState<{ main: number; sub?: number }>({ main: 0 });
   // State to track collapsed/expanded sidebar
   const [collapsed, setCollapsed] = useState(false);
+  // Only one state: collapsed. Animations for width and text opacity will run together.
 
   // Toggle sub-menu open/close
   const handleToggle = (idx: number) => {
@@ -93,8 +94,14 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className="flex flex-col h-screen border-r border-[#383d4c] p-4 transition-all duration-300 ease-in-out bg-[#20222A]"
-      style={{ width: collapsed ? 64 : 244, minWidth: collapsed ? 64 : 244, maxWidth: collapsed ? 64 : 244 }}
+      // Smoother animation: duration-500 and a less dramatic cubic-bezier for width and other properties
+      className="flex flex-col h-screen border-r border-[#383d4c] p-4 transition-all duration-500 bg-[#20222A]"
+      style={{
+        width: collapsed ? 64 : 244,
+        minWidth: collapsed ? 64 : 244,
+        maxWidth: collapsed ? 64 : 244,
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)', // Slightly less smooth curve
+      }}
     >
       {/* Top section: Logo and collapse/expand button */}
       <div className={`flex items-center h-[45px] ${collapsed ? 'justify-center' : 'justify-between'} mb-1`}>
@@ -111,12 +118,8 @@ const Sidebar: React.FC = () => {
                 : 'p-2 ml-2 rounded hover:bg-[#232323] transition-colors'
             }
             onClick={() => {
-              if (collapsed) {
-                setCollapsed(false);
-                setOpenIndex(null); // Close all submenus when expanding
-              } else {
-                setCollapsed(true);
-              }
+              if (collapsed) setOpenIndex(null); // Close all submenus when expanding
+              setCollapsed((prev) => !prev); // Toggle collapsed state
             }}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -132,49 +135,56 @@ const Sidebar: React.FC = () => {
           const isSubMenuOpen = openIndex === idx && !collapsed;
           // Icon should be bold and colored ONLY if main menu is selected (not a sub-menu)
           const isIconSelected = selected.main === idx && selected.sub === undefined;
-          // Render only icon and tooltip when collapsed
-          if (collapsed) {
-            return (
-              <Tooltip key={item.label} text={item.label}>
-                <div
-                  className={`flex items-center justify-center h-[45px] w-[45px] mr-4 my-1 rounded-lg cursor-pointer transition-colors hover:bg-[#2D313D]`}
-                  onClick={() => {
-                    // If 'People & Teams' or 'Content & Courses' is clicked, expand sidebar
-                    if (item.label === 'People & Teams' || item.label === 'Content & Courses') {
-                      setCollapsed(false);
-                      setOpenIndex(idx);
-                    } else {
-                      handleSelectMain(idx);
-                    }
-                  }}
-                >
-                  {item.icon(
-                    isIconSelected ? selectedColor : defaultColor,
-                    isIconSelected ? 'Bold' : 'Linear'
-                  )}
-                </div>
-              </Tooltip>
-            );
-          }
-          // Expanded sidebar: show icon, text, and submenus
+          // Always render icon and text container for animation
           return (
             <div key={item.label}>
               <div
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${item.subMenu ? 'justify-between' : ''} hover:bg-[#2D313D]`}
                 onClick={() => {
-                  if (item.subMenu) {
+                  // If sidebar is collapsed and user clicks on 'People & Teams' or 'Content & Courses', expand and open submenu
+                  if (collapsed && (item.label === 'People & Teams' || item.label === 'Content & Courses')) {
+                    setCollapsed(false);
+                    setOpenIndex(idx);
+                  } else if (item.subMenu) {
                     handleToggle(idx);
                   } else {
                     handleSelectMain(idx);
                   }
                 }}
               >
+                {/* Icon and fixed-width text container */}
                 <div className="flex items-center gap-3">
-                  {item.icon(
-                    isIconSelected ? selectedColor : defaultColor,
-                    isIconSelected ? 'Bold' : 'Linear'
+                  {/* Tooltip only when collapsed */}
+                  {collapsed ? (
+                    <Tooltip text={item.label}>
+                      <div>
+                        {item.icon(
+                          isIconSelected ? selectedColor : defaultColor,
+                          isIconSelected ? 'Bold' : 'Linear'
+                        )}
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    item.icon(
+                      isIconSelected ? selectedColor : defaultColor,
+                      isIconSelected ? 'Bold' : 'Linear'
+                    )
                   )}
-                  <span className={`text-[14px] font-poppins ${isMainSelected ? selectedText : defaultText}`}>{item.label}</span>
+                  {/* Fixed-width text container: always present, text fades in/out */}
+                  <div className="w-[120px] overflow-hidden">
+                    <span
+                      // Fade in with 100ms delay when expanding, fade out instantly when collapsing
+                      className={`text-[14px] font-poppins transition-opacity duration-200
+                        ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}
+                        ${isMainSelected ? selectedText : defaultText}`}
+                      style={{
+                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                        transitionDelay: collapsed ? '0ms' : '100ms',
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
                 </div>
                 {/* Show arrow if has sub-menu */}
                 {item.subMenu && (
@@ -187,7 +197,7 @@ const Sidebar: React.FC = () => {
               </div>
               {/* Sub-menu with animated expand/collapse (only when expanded) */}
               <div
-                className={`overflow-hidden transition-all duration-200 ease-in-out ${isSubMenuOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+                className={`overflow-hidden transition-all duration-200 ease-in-out ${isSubMenuOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'} `}
                 style={{ pointerEvents: isSubMenuOpen ? 'auto' : 'none' }}
               >
                 {item.subMenu && (
@@ -200,7 +210,19 @@ const Sidebar: React.FC = () => {
                           className={`py-2 pr-4 rounded cursor-pointer text-[14px] font-poppins transition-all duration-200 hover:bg-[#2D313D] group`}
                           onClick={() => handleSelectSub(idx, subIdx)}
                         >
-                          <span className={isSubSelected ? selectedSubText : defaultSubText}>{sub.label}</span>
+                          {/* Submenu text with fade animation (opacity animates with sidebar width) */}
+                          <span
+                            // Fade in with 100ms delay when expanding, fade out instantly when collapsing
+                            className={`transition-opacity duration-200
+                              ${isSubMenuOpen && !collapsed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+                              ${isSubSelected ? selectedSubText : defaultSubText}`}
+                            style={{
+                              transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                              transitionDelay: !collapsed && isSubMenuOpen ? '100ms' : '0ms',
+                            }}
+                          >
+                            {sub.label}
+                          </span>
                         </div>
                       );
                     })}
