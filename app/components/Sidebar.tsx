@@ -137,7 +137,7 @@ const Sidebar: React.FC = () => {
             return (
               <Tooltip key={item.label} text={item.label}>
                 <div
-                  className={`flex items-center justify-center h-[45px] w-[45px] mx-auto mr-3 my-1 rounded-lg cursor-pointer transition-colors hover:bg-[#2D313D]`}
+                  className={`flex items-center justify-center h-[45px] w-[45px] mr-4 my-1 rounded-lg cursor-pointer transition-colors hover:bg-[#2D313D]`}
                   onClick={() => {
                     // If 'People & Teams' or 'Content & Courses' is clicked, expand sidebar
                     if (item.label === 'People & Teams' || item.label === 'Content & Courses') {
