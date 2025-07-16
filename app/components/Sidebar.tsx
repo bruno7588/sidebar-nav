@@ -12,6 +12,7 @@ import {
   Teacher,
   ArrowUp2,
   SidebarLeft,
+  SidebarRight,
 } from 'iconsax-react';
 
 // Tooltip component with left-pointing arrow, matching Figma design
@@ -22,7 +23,7 @@ const Tooltip = ({ children, text, ml = 'ml-4' }: { children: React.ReactNode; t
       {/* Arrow */}
       <div className="w-0 h-0 border-y-[10px] border-y-transparent border-r-[10px] border-r-[#0F1014] mr-[-1px]"></div>
       {/* Tooltip box */}
-      <span className="whitespace-nowrap rounded-lg bg-[#0F1014] px-3 py-2 text-white text-base font-normal shadow-lg flex items-center">
+      <span className="whitespace-nowrap rounded-lg bg-[#0F1014] px-3 py-2 text-white text-[14px] font-poppins font-normal shadow-lg flex items-center">
         {text}
       </span>
     </div>
@@ -97,9 +98,9 @@ const Sidebar: React.FC = () => {
       // Smoother animation: duration-500 and a less dramatic cubic-bezier for width and other properties
       className="flex flex-col h-screen border-r border-[#383d4c] p-4 transition-all duration-500 bg-[#20222A]"
       style={{
-        width: collapsed ? 64 : 244,
-        minWidth: collapsed ? 64 : 244,
-        maxWidth: collapsed ? 64 : 244,
+        width: collapsed ? 84 : 244,
+        minWidth: collapsed ? 84 : 244,
+        maxWidth: collapsed ? 84 : 244,
         transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)', // Slightly less smooth curve
       }}
     >
@@ -107,23 +108,48 @@ const Sidebar: React.FC = () => {
       <div className={`flex items-center h-[45px] ${collapsed ? 'justify-center' : 'justify-between'} mb-1`}>
         {/* Logo (replace src with your logo if needed) */}
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Logo" className="h-[20px] w-auto px-4 transition-all duration-200" />
+          <img
+            src="/logo.svg"
+            alt="Logo"
+            className={`h-[20px] w-auto px-4 transition-all duration-200
+              ${collapsed ? 'opacity-0 scale-90' : 'opacity-100 scale-100'}`}
+            style={{
+              transitionProperty: 'opacity, transform',
+              transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+              transitionDuration: '200ms',
+            }}
+          />
         </div>
         {/* Collapse/Expand button */}
         <Tooltip text={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} ml={collapsed ? 'ml-2' : 'ml-4'}>
           <button
             className={
               collapsed
-                ? 'h-[45px] w-[45px] p-0 m-0 flex items-center justify-center rounded hover:bg-[#232323] transition-colors mx-auto mr-4'
-                : 'p-2 ml-2 rounded hover:bg-[#232323] transition-colors'
+                ? 'h-[45px] w-[45px] p-0 m-0 flex items-center justify-center rounded hover:bg-[#2D313D] transition-colors mx-auto mr-4'
+                : 'p-2 ml-2 rounded hover:bg-[#2D313D] transition-colors'
             }
             onClick={() => {
               if (collapsed) setOpenIndex(null); // Close all submenus when expanding
               setCollapsed((prev) => !prev); // Toggle collapsed state
             }}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            style={{ width: 45, height: 45, minWidth: 45, minHeight: 45, position: 'relative' }}
           >
-            <SidebarLeft size={20} color="#bfc2cc" className={collapsed ? 'rotate-180 transition-transform mx-auto' : 'transition-transform'} />
+            {/* Fade between SidebarLeft and SidebarRight icons */}
+            <span className="relative block w-5 h-5 overflow-hidden" style={{ width: 20, height: 20 }}>
+              <span
+                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${collapsed ? 'opacity-100' : 'opacity-0'}`}
+                style={{ transitionProperty: 'opacity', width: 20, height: 20 }}
+              >
+                <SidebarRight size={20} color="#bfc2cc" style={{ width: 20, height: 20, transform: 'translateX(-1px)' }} />
+              </span>
+              <span
+                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-150 ${collapsed ? 'opacity-0' : 'opacity-100'}`}
+                style={{ transitionProperty: 'opacity', width: 20, height: 20 }}
+              >
+                <SidebarLeft size={20} color="#bfc2cc" style={{ width: 20, height: 20 }} />
+              </span>
+            </span>
           </button>
         </Tooltip>
       </div>
