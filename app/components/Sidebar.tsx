@@ -13,20 +13,23 @@ import {
   ArrowUp2,
   SidebarLeft,
   SidebarRight,
+  MessageQuestion,
 } from 'iconsax-react';
 
 // Tooltip component with left-pointing arrow, matching Figma design
-const Tooltip = ({ children, text, ml = 'ml-4' }: { children: React.ReactNode; text: string; ml?: string }) => (
+const Tooltip = ({ children, text, ml = 'ml-4', show = true }: { children: React.ReactNode; text: string; ml?: string; show?: boolean }) => (
   <div className="relative group">
     {children}
-    <div className={`pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ${ml} z-10 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
-      {/* Arrow */}
-      <div className="w-0 h-0 border-y-[10px] border-y-transparent border-r-[10px] border-r-[#0F1014] mr-[-1px]"></div>
-      {/* Tooltip box */}
-      <span className="whitespace-nowrap rounded-lg bg-[#0F1014] px-3 py-2 text-white text-[14px] font-poppins font-normal shadow-lg flex items-center">
-        {text}
-      </span>
-    </div>
+    {show && (
+      <div className={`pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-5 ${ml} z-10 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
+        {/* Arrow */}
+        <div className="w-0 h-0 border-y-[10px] border-y-transparent border-r-[10px] border-r-[#0F1014] mr-[-1px]"></div>
+        {/* Tooltip box */}
+        <span className="whitespace-nowrap rounded-lg bg-[#0F1014] px-3 py-2 text-white text-[14px] font-poppins font-normal shadow-lg flex items-center">
+          {text}
+        </span>
+      </div>
+    )}
   </div>
 );
 
@@ -57,7 +60,12 @@ const navItems = [
   { label: 'Learning Records', icon: (color: string, variant: 'Linear' | 'Bold') => <TaskSquare size={20} color={color} variant={variant} /> },
   { label: 'Events', icon: (color: string, variant: 'Linear' | 'Bold') => <CalendarTick size={20} color={color} variant={variant} /> },
   { label: 'Account & Settings', icon: (color: string, variant: 'Linear' | 'Bold') => <Setting2 size={20} color={color} variant={variant} /> },
+];
+
+// Bottom group nav items
+const bottomNavItems = [
   { label: '5Mins Academy', icon: (color: string, variant: 'Linear' | 'Bold') => <Teacher size={20} color={color} variant={variant} /> },
+  { label: 'Help & Support', icon: (color: string, variant: 'Linear' | 'Bold') => <MessageQuestion size={20} color={color} variant={variant} /> },
 ];
 
 const Sidebar: React.FC = () => {
@@ -199,8 +207,7 @@ const Sidebar: React.FC = () => {
                   {/* Fixed-width text container: always present, text fades in/out */}
                   <div className="w-[120px] overflow-hidden">
                     <span
-                      // Fade in with 100ms delay when expanding, fade out instantly when collapsing
-                      className={`text-[14px] font-poppins transition-opacity duration-200
+                      className={`whitespace-nowrap text-[14px] font-poppins transition-opacity duration-200
                         ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}
                         ${isMainSelected ? selectedText : defaultText}`}
                       style={{
@@ -259,9 +266,53 @@ const Sidebar: React.FC = () => {
           );
         })}
       </nav>
+      {/* Bottom group: 5Mins Academy & Help & Support pinned to bottom */}
+      <div className="flex flex-col gap-1 mt-auto">
+        {bottomNavItems.map((item, idx) => {
+          // For bottom group, use a high index offset to avoid conflicts with main nav selection
+          const bottomIdx = navItems.length + idx;
+          const isMainSelected = selected.main === bottomIdx && selected.sub === undefined;
+          const isIconSelected = selected.main === bottomIdx && selected.sub === undefined;
+          return (
+            <div key={item.label}>
+              <div
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors hover:bg-[#2D313D]`}
+                onClick={() => handleSelectMain(bottomIdx)}
+                style={{ minHeight: 48 }} // Ensures vertical space is always reserved
+              >
+                <div className="flex items-center gap-3">
+                  <Tooltip text={item.label} show={collapsed}>
+                    <div>
+                      {item.icon(
+                        isIconSelected ? selectedColor : '#9EA4B3',
+                        isIconSelected ? 'Bold' : 'Linear'
+                      )}
+                    </div>
+                  </Tooltip>
+                  <div className="w-[120px] overflow-hidden">
+                    <span
+                      className={`text-[14px] font-poppins transition-opacity duration-200
+                        ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}
+                        ${isMainSelected ? 'font-bold text-[#FFBB38]' : 'text-[#9EA4B3]'}`}
+                      style={{
+                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                        transitionDelay: collapsed ? '0ms' : '100ms',
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       {/* Powered by section (optional, can be removed or replaced) */}
-      {!collapsed && (
-        <div className="px-8 pb-6 pt-2 mt-auto">
+      {collapsed ? (
+        <div className="px-8 pb-6 pt-2 h-[56px]" />
+      ) : (
+        <div className="px-8 pb-6 pt-2">
           <p className="text-[#9ea4b3] text-xs font-poppins mb-2">Powered by</p>
           {/* Placeholder for logo - replace with your logo if needed */}
           <div className="h-5 w-24 bg-[#00D3BF] rounded" />
